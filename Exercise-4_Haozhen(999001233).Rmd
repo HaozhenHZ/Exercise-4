@@ -1,0 +1,90 @@
+---
+title: "Exercise-4_HaozhenHong(999001233)"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+### Exploring the count tables
+
+Here, import an example count table and do some exploration of the expression data. 
+
+```{r}
+counts_file <- system.file("extdata/rna-seq/SRP029880.raw_counts.tsv",
+                           package = "compGenomRData")
+coldata_file <- system.file("extdata/rna-seq/SRP029880.colData.tsv", 
+                            package = "compGenomRData")
+```
+
+Load the packages needed.
+
+```{r}
+library(pheatmap)
+library(corrplot)
+```
+1. Normalize the counts using the TPM approach. 
+
+```{r}
+# Load the table
+counts <- read.table(counts_file)
+# Obtain gene length for rpkm
+genelength <- as.vector(counts[,'width'])
+# Obtain RPKM
+rpkm <- apply(subset(counts, select = c(-width)), 2, function(x) 10^9*x/genelength/sum(x))
+# Obtain TPM
+tpm <- apply(rpkm, 2, function(x) 10^6*x/sum(x))
+# Check the sum of each column equals to 10^6
+colSums(tpm)
+```
+
+2. Plot a heatmap of the top 500 most variable genes. Compare with the heatmap obtained using the 100 most variable genes. Hint : use var() function to compute the variance. 
+```{r}
+# Compute the variance of each gene.
+V <- apply(tpm, 1, var)
+# Select 500 most variable genes.
+gene_top500 <- names(V[order(V, decreasing = T)])[1:500]
+# Draw the heat map.
+pheatmap(tpm[gene_top500,], scale = 'row', show_rownames = F)
+
+# Same ops to the top 100 most variable genes.
+gene_top100 <- names(V[order(V, decreasing = T)])[1:100]
+pheatmap(tpm[gene_top100,], scale = 'row', show_rownames = F)
+
+```
+```{r echo=FALSE}
+paste("The heatmap for top 500 genes are much denser than that of top 100 genes.")
+```
+
+3. Re-do the heatmaps setting the `scale` argument to `none`, and `column`. Compare the results with `scale = 'row'`.
+
+```{r}
+pheatmap(tpm[gene_top100,], scale = 'none', show_rownames = F)
+pheatmap(tpm[gene_top100,], scale = 'column', show_rownames = F)
+```
+```{r eval=FALSE}
+paste("scale = 'row' enables us to see the variance in each gene, while the other settings can not.")
+```
+
+4. Draw a correlation plot for the samples depicting the sample differences as 'ellipses', drawing only the upper end of the matrix, and order samples by hierarchical clustering results based on `average` linkage clustering method. 
+
+```{r}
+# Generate correlation matrix
+correlationMatrix <- cor(tpm)
+
+# Correlation plot
+corrplot(correlationMatrix,
+         method = "ellipse",
+         type = "upper",
+         order = "hclust",
+         hclust.method = "average")
+```
+
+### Git and Github
+
+5. Open Github account, and install git if it required as instructed in the following link: https://github.com/llendway/github_for_collaboration/blob/master/github_for_collaboration.md
+
+6. Create a repository and commit and push the answers of this exercise through Rtudio (Please upload the answers to the exercises also to Moodle).
+
+7. Insert the link to your Github account here.
